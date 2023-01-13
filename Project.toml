@@ -3,5 +3,8 @@ uuid = "b53f056f-43f6-4734-8d94-3aedffe6e4fb"
 authors = ["Bryan Hill <bf361640-7eb8-4e29-80f7-5250fa6b442b@aleeas.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+
 [compat]
 julia = "1.8"
