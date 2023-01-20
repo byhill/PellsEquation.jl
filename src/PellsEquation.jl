@@ -3,7 +3,9 @@ module PellsEquation
 using Base.Iterators: countfrom
 using Primes: factor
 
-export pells_eqn
+using("sqrtmod.jl")
+
+export pells_eqn, pells_variant
 
 """
     issquare(n::Integer)
@@ -19,16 +21,6 @@ Returns a list of positive integers f such that f^2 divides n.
 """
 function squarefactors(n::Integer)
     return sort(foldl((a, (p, e)) -> vcat((a * [p^(i) for i in 0:e÷2]')...), factor(n), init=[one(typeof(n))]))
-end
-
-
-function modularsquareroots(n::Integer, m::Integer)
-    solns = []
-    n = mod(n, m)
-    for x = 0:m÷2
-        powermod(x, 2, m) == n && (push!(solns, x), push!(solns, -x))
-    end
-    return solns
 end
 
 
@@ -99,7 +91,7 @@ Finds the minimal positive solution (x₀, y₀) to x^2 - Dy^2 = ±1.
 Returns (l, x₀, y₀) where l is the number of iterations of PQa
 it took to find x₀, y₀.
 """
-function pellsfundamentalsoln1(D::Integer)
+function pells_fundamental_soln_1(D::Integer)
     a₀ = isqrt(D)
     (G, B) = (0, 0)
     for pqa in PQa(D, 0, 1)
@@ -137,7 +129,7 @@ function pells_eqn_1(::Type{T}, D::Integer) where {T<:Integer}
     D > 0 || throw(DomainError(D, "D must be a positive integer"))
     issquare(D) && throw(DomainError(D, "D must not be a perfect square"))
 
-    (l, x₀, y₀) = pellsfundamentalsoln1(D)
+    (l, x₀, y₀) = pells_fundamental_soln_1(D)
     if isodd(l)
         (x₀, y₀) = (x₀ * x₀ + D * y₀ * y₀, 2x₀ * y₀)
     end
@@ -194,7 +186,7 @@ function pells_eqn_neg1(::Type{T}, D::Integer) where {T<:Integer}
     D > 0 || throw(DomainError(D, "D must be a positive integer"))
     issquare(D) && throw(DomainError(D, "D must not be a perfect square"))
 
-    (l, x₀, y₀) = pellsfundamentalsoln1(D)
+    (l, x₀, y₀) = pells_fundamental_soln_1(D)
     if isodd(l)
         (u, v) = (x₀^2 + D * y₀^2, 2x₀ * y₀)
         return PellsEqn_Neg1{T}(D, x₀, y₀, u, v)
@@ -242,7 +234,7 @@ struct PellsEqnGeneral{T}
 end
 
 
-function fundamentalsolns(::Type{T}, D::Integer, P::Integer, Q::Integer) where {T<:Integer}
+function fundamentalsoln(::Type{T}, D::Integer, P::Integer, Q::Integer) where {T<:Integer}
     (P_reduced, Q_reduced) = (zero(T), zero(T))
     (G, B) = (abs(Q), zero(T))
 
@@ -261,27 +253,35 @@ function fundamentalsolns(::Type{T}, D::Integer, P::Integer, Q::Integer) where {
     end
 end
 
-pellseqn_general(D::Integer, N::Integer) = pellseqn_general(BigInt, D, N)
 
-function pellseqn_general(::Type{T}, D::Integer, N::Integer) where {T<:Integer}
-    (t, u) = first(pells_eqn_1(D))
-    (tneg, uneg) = isempty(pells_eqn_neg1(T, D)) ? (zero(T), zero(T)) : first(pells_eqn_neg1(T, D))
+function fundamental_solns(::Type{T}, D::Integer, N::Integer) where {T<:Integer}
+    (t, u) = isempty(pells_eqn_neg1(T, D)) ? (zero(T), zero(T)) : first(pells_eqn_neg1(T, D))
     solns = Tuple{T,T}[]
 
     for f in squarefactors(N)
         m = N ÷ f^2
         for z in modularsquareroots(D, abs(m))
-            soln = fundamentalsolns(T, D, z, abs(m))
+            soln = fundamentalsoln(T, D, z, abs(m))
             isnothing(soln) && continue
             (r, s) = soln
             if r^2 - D * s^2 == m
                 push!(solns, (f * r, f * s))
-            elseif (tneg, uneg) != (0, 0)
-                push!(solns, (f * (r * tneg + D * s * uneg), f * (r * uneg + s * tneg)))
+            elseif (t, u) != (0, 0)
+                push!(solns, (f * (r * t + D * s * u), f * (r * u + s * t)))
             end
         end
     end
     unique!(solns)
+
+    return solns
+end
+
+pellseqn_general(D::Integer, N::Integer) = pellseqn_general(BigInt, D, N)
+
+function pellseqn_general(::Type{T}, D::Integer, N::Integer) where {T<:Integer}
+    (t, u) = first(pells_eqn_1(D))
+
+    solns = fundamental_solns(T, D, N)
 
     queue = Tuple{T,T}[]
     for (x, y) in solns
@@ -291,7 +291,6 @@ function pellseqn_general(::Type{T}, D::Integer, N::Integer) where {T<:Integer}
         push!(queue, (x, y))
     end
     sort!(queue)
-    println((queue, t, u))
 
     return PellsEqnGeneral{BigInt}(D, t, u, queue)
 end
@@ -343,6 +342,33 @@ function pells_eqn(::Type{T}, D::Integer, N::Integer=T(1)) where {T<:Integer}
     N == 1 && return pells_eqn_1(T, D)
     N == -1 && return pells_eqn_neg1(T, D)
     return pellseqn_general(T, D, N)
+end
+
+
+"""
+    pells_variant([T,] a::Integer, b::Integer, c::Integer)
+
+Returns an iterator that iterates over all nonegative integer solutions `(x, y)`
+of the equation
+
+`a⋅x^2 - b⋅y^2 = c'.
+"""
+pells_variant(a::Integer, b::Integer, c::Integer) = pells_variant(BigInt, a, b, c)
+
+function pells_variant(::Type{T}, a::Integer, b::Integer, c::Integer) where {T<:Integer}
+    c == 0 && throw(DomainError(c, "c must be nonzero"))
+    a > 0 || throw(DomainError(a, "a must be a positive integer"))
+    b > 0 || throw(DomainError(b, "b must be a positive integer"))
+    D = a * b
+    N = a * c
+    issquare(D) && throw(DomainError(a * b, "a⋅b must not be a perfect square"))
+
+    (u, v) = first(pells_eqn_1(T, D))
+    any(soln -> mod(soln[1], a) == 0, fundamental_solns(T, D, N)) || return ()
+    return Iterators.map(
+        soln -> ((soln[1] ÷ a) * u + b * soln[2] * v, soln[2] * u + soln[1] * v),
+        Iterators.filter(soln -> mod(soln[1], a) == 0, pells_eqn(T, D, N))
+    )
 end
 
 end  # module PellsEquation
