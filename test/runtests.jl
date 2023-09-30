@@ -1,21 +1,27 @@
 using PellsEquation
 using Test
 
+using .Iterators
+
 @testset "PellsEquation.jl" begin
 
     @testset "pellsequation" begin
         pells13 = ((649, 180), (842401, 233640), (1093435849, 303264540))
-        for (i, (x, y)) in zip(1:3, pells_eqn(13))
+        for (i, (x, y)) in zip(1:3, pellseqn(13))
+            @test x isa BigInt
+            @test y isa BigInt
             @test (x, y) == pells13[i]
         end
 
         negpells13 = ((18, 5), (23382, 6485), (30349818, 8417525))
-        for (i, (x, y)) in zip(1:3, pells_eqn(13, -1))
+        for (i, (x, y)) in zip(1:3, pellseqn(13, -1))
+            @test x isa BigInt
+            @test y isa BigInt
             @test (x, y) == negpells13[i]
         end
 
-        @test first(pells_eqn(991)) == (379516400906811930638014896080, 12055735790331359447442538767)
-        @test isempty(pells_eqn(991, -1))
+        @test first(pellseqn(991)) == (379516400906811930638014896080, 12055735790331359447442538767)
+        @test isempty(pellseqn(991, -1))
 
     end
 
@@ -35,7 +41,9 @@ using Test
                 (2454211373209617617356543, 195867390866986840719829),
                 (2050081629081114757949687893, 163614326025765424385866679),
             ]
-            @test collect(Iterators.take(pells_eqn(157, 12), 12)) == ans
+            res = collect(Iterators.take(pellseqn(157, 12), 12))
+            @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+            @test res == ans
 
             ans = [
                 (50, 4)
@@ -51,7 +59,10 @@ using Test
                 (9624584245237121297322521, 768125445457745477545777)
                 (522758544358818215189083630, 41720673799615848284192404)
             ]
-            @test collect(Iterators.take(pells_eqn(157, -12), 12)) == ans
+            res = collect(Iterators.take(pellseqn(157, -12), 12))
+            @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+            @test res == ans
+
         end
     end
 
