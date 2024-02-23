@@ -1,9 +1,9 @@
 module PellsEquation
 
 using ModularSquareRoots: sqrtmod
-using Primes: factor
+using Primes: eachfactor
 
-export pellseqn
+export pellseqn, PQa
 
 
 """
@@ -20,7 +20,7 @@ Returns a list of positive integers d such that d^2 divides n.
 """
 function squarefactors(n::T) where {T<:Integer}
     factors = [one(T)]
-    for (p, e) in factor(n)
+    for (p, e) in eachfactor(n)
         x = [p^i for i in 1:e÷2]
         L = length(factors)
         for d in factors[1:L], n in x
@@ -28,6 +28,7 @@ function squarefactors(n::T) where {T<:Integer}
         end
     end
     sort!(factors)
+
     return factors
 end
 
@@ -58,7 +59,7 @@ function Base.iterate(it::PQA{T}) where {T<:Integer}
     (B₋₂, B₋₁) = (one(T), zero(T))
     (G₋₂, G₋₁) = (-it.P, it.Q)
 
-    a₀ = floor(T, (it.P + sqrt(it.D)) / it.Q)
+    a₀ = floor(T, (it.P + sqrt(it.D)) / it.Q)  # TODO Find the floor of a quadratic integer using only integer arithmetic
     A₀ = a₀ * A₋₁ + A₋₂
     B₀ = a₀ * B₋₁ + B₋₂
     G₀ = a₀ * G₋₁ + G₋₂
@@ -76,7 +77,7 @@ function Base.iterate(it::PQA{T}, state) where {T<:Integer}
     i += 1
     Pᵢ = aᵢ₋₁ * Qᵢ₋₁ - Pᵢ₋₁
     Qᵢ = (D - Pᵢ^2) ÷ Qᵢ₋₁
-    aᵢ = floor(T, (Pᵢ + sqrt(D)) / Qᵢ)
+    aᵢ = floor(T, (Pᵢ + sqrt(D)) / Qᵢ)  # TODO Find the floor of a quadratic integer using only integer arithmetic
     Aᵢ = aᵢ * Aᵢ₋₁ + Aᵢ₋₂
     Bᵢ = aᵢ * Bᵢ₋₁ + Bᵢ₋₂
     Gᵢ = aᵢ * Gᵢ₋₁ + Gᵢ₋₂
@@ -157,7 +158,7 @@ function fundamental_soln(D::T, P::T, Q::T) where {T<:Integer}
         if (P_reduced, Q_reduced) == (0, 0)
             ξ = (pqa.P + sqrt(D)) / pqa.Q
             ξ̄ = (pqa.P - sqrt(D)) / pqa.Q
-            if ξ > 1 && (-1 < ξ̄ < 0)
+            if ξ > 1 && (-1 < ξ̄ < 0)  # TODO See if you can do this using only integer arithmetic
                 (P_reduced, Q_reduced) = (pqa.P, pqa.Q)
             end
         end
@@ -249,10 +250,9 @@ of the equation
 
 `x^2 - D⋅y^2 = N`.
 """
-pellseqn(D::Integer, N::Integer=1) = pellseqn(BigInt, D, N)
-pellseqn(::Type{T}, D::Integer, N::Integer=1) where {T<:Integer} = pellseqn(T, convert(T, D), convert(T, N))
+pellseqn(D::Integer, N::Integer=1) = pellseqn(big(D), big(N))
 
-function pellseqn(::Type{T}, D::T, N::T=one(T)) where {T<:Integer}
+function pellseqn(D::BigInt, N::BigInt=big(1))
     isless(0, D) || throw(DomainError(D, "D must be a positive integer"))
     iszero(N) && throw(DomainError(N, "N must be a nonzero integer"))
     issquare(D) && throw(DomainError(D, "D must not be a perfect square"))
