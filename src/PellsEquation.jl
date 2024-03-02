@@ -1,7 +1,8 @@
 module PellsEquation
 
 using ModularSquareRoots: sqrtmod
-using Primes: eachfactor
+using Primes: eachfactor, divisors
+using .Iterators
 
 export pellseqn, PQa
 
@@ -208,34 +209,58 @@ end
 # --------------------------------------------------------------------
 # Iterator implementation
 
+@enum SolutionType begin  # x^2 - Dy^2 = N, where...
+    pellsolution  # D nonsquare, N nonzero
+    zerocoeff  # D or N are zero and the other is square
+    finite  # D > 0 square, or N is zero and D is nonsquare
+end
+
 struct PellsEqn{T}
     D::T
     u::T
     v::T
     queue::Vector{Tuple{T,T}}
+    solntype::SolutionType
 end
+
+PellsEqn{T}(D, u, v, queue) where {T} = PellsEqn{T}(D, u, v, queue, pellsolution)
+
 
 function Base.iterate(it::PellsEqn)
     state = it.queue
     isempty(state) && return nothing
 
-    (D, u, v) = (it.D, it.u, it.v)
     (x, y) = popfirst!(state)
-    (xₙ, yₙ) = (x * u + D * y * v, x * v + y * u)
-    push!(state, (xₙ, yₙ))
+    (D, u, v) = (it.D, it.u, it.v)
+    if it.solntype == pellsolution
+        (xₙ, yₙ) = (x * u + D * y * v, x * v + y * u)
+        push!(state, (xₙ, yₙ))
+    elseif it.solntype == zerocoeff
+        (xₙ, yₙ) = (x + u, y + v)
+        push!(state, (xₙ, yₙ))
+    end
+
     return ((x, y), state)
 end
 
 function Base.iterate(it::PellsEqn, state)
-    (D, u, v) = (it.D, it.u, it.v)
+    isempty(state) && return nothing
+
     (x, y) = popfirst!(state)
-    (xₙ, yₙ) = (x * u + D * y * v, x * v + y * u)
-    push!(state, (xₙ, yₙ))
+    (D, u, v) = (it.D, it.u, it.v)
+    if it.solntype == pellsolution
+        (xₙ, yₙ) = (x * u + D * y * v, x * v + y * u)
+        push!(state, (xₙ, yₙ))
+    elseif it.solntype == zerocoeff
+        (xₙ, yₙ) = (x + u, y + v)
+        push!(state, (xₙ, yₙ))
+    end
+
     return ((x, y), state)
 end
 
 Base.IteratorSize(::Type{PellsEqn{T}}) where {T} = Base.SizeUnknown()
-eltype(::Type{PellsEqn{T}}) where {T} = Tuple{T,T}
+Base.eltype(::Type{PellsEqn{T}}) where {T} = Tuple{T,T}
 
 
 # --------------------------------------------------------------------
@@ -253,13 +278,59 @@ of the equation
 pellseqn(D::Integer, N::Integer=1) = pellseqn(big(D), big(N))
 
 function pellseqn(D::BigInt, N::BigInt=big(1))
-    isless(0, D) || throw(DomainError(D, "D must be a positive integer"))
-    iszero(N) && throw(DomainError(N, "N must be a nonzero integer"))
-    issquare(D) && throw(DomainError(D, "D must not be a perfect square"))
+    D < 0 && throw(DomainError(D, "D must be a nonnegative integer"))
 
-    isone(N) && return pellseqn1(D)
-    isone(-N) && return pellseqn_neg1(D)
-    return _pellseqn(D, N)
+    T = BigInt
+    TT = Tuple{T,T}
+    if iszero(D)
+        # Has solutions iff N is square
+        # Solutions are (sqrt(N), 0), (sqrt(N), 1), (sqrt(N), 2), ...
+        if issquare(N)
+            return PellsEqn(D, zero(T), one(T), [(isqrt(N), zero(T))], zerocoeff)
+        else
+            return PellsEqn(D, zero(T), one(T), TT[], finite)
+        end
+
+    elseif iszero(N)
+        # If D is square,
+        # solutions are (0, 0), (sqrt(D), 1), (2sqrt(D), 2), ...
+        # else, the only solution is (0, 0)
+        if issquare(D)
+            return PellsEqn(D, isqrt(D), one(D), [(zero(T), zero(T))], zerocoeff)
+        else
+            return PellsEqn(D, isqrt(D), one(D), [(zero(T), zero(T))], finite)
+        end
+
+    elseif issquare(D)
+        D = isqrt(D)
+        # N = x^2 - D^2y^2 = (x - Dy)(x + Dy) = d1 * d2
+        solns = TT[]
+        for d1 in divisors(N)
+            N < 0 && (d1 = -d1)
+            d2 = N ÷ d1
+
+            x = d1 + d2
+            iseven(x) || continue
+            x ≥ 0 || continue
+            x >>= 1
+
+            y = (d2 - d1)
+            y ≥ 0 || continue
+            iszero(mod(y, 2D)) || continue
+            y ÷= 2D
+
+            push!(solns, (x, y))
+        end
+
+        return PellsEqn(D, zero(T), zero(T), sort(solns), finite)
+
+    elseif isone(N)
+        return pellseqn1(D)
+    elseif isone(-N)
+        return pellseqn_neg1(D)
+    else
+        return _pellseqn(D, N)
+    end
 end
 
 

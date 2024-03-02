@@ -66,4 +66,43 @@ using .Iterators
         end
     end
 
+    @testset "x^2 + 0 * y^2 = N^2" begin
+        it = pellseqn(0, 3)
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test isempty(it)
+
+        it = pellseqn(0, 4)
+        res = collect(Iterators.take(it, 5))
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+        @test res == [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)]
+    end
+
+    @testset "x^2 + D * y^2 = 0" begin
+        it = pellseqn(3, 0)
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test collect(it) == [(0, 0)]
+
+        it = pellseqn(4, 0)
+        res = collect(Iterators.take(it, 5))
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+        @test res == [(0, 0), (2, 1), (4, 2), (6, 3), (8, 4)]
+    end
+
+    @testset "x^2 + D^2*y^2 = N" begin
+        it = pellseqn(16, 10625)
+        res = collect(Iterators.take(it, 5))
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+        @test isempty(it)
+        @test res == [(105, 5), (225, 50), (321, 76), (1065, 265), (5313, 1328)]
+
+        it = pellseqn(16, -9375)
+        res = collect(Iterators.take(it, 6))
+        @test eltype(it) == Tuple{BigInt,BigInt}
+        @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
+        @test isempty(it)
+        @test res == [(25, 25), (175, 50), (305, 80), (935, 235), (1561, 391), (4687, 1172)]
+    end
 end
