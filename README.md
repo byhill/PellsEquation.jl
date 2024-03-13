@@ -15,7 +15,9 @@ This will return a (possibly infinite) iterator whose eltype is `Tuple{BigInt,Bi
 ## Examples
 
 ```julia
-julia> using .Iterators
+julia> Pkg.add("PellsEquation")
+
+julia> using PellsEquation, .Iterators
 
 julia> collect(take(pellseqn(2), 5))
 5-element Vector{Tuple{BigInt, BigInt}}:
