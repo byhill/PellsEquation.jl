@@ -21,19 +21,19 @@ julia> using PellsEquation, .Iterators
 
 julia> collect(take(pellseqn(2), 5))
 5-element Vector{Tuple{BigInt, BigInt}}:
+ (1, 0)
  (3, 2)
  (17, 12)
  (99, 70)
  (577, 408)
- (3363, 2378)
 
 julia> collect(take(pellseqn(2, 1), 5))
 5-element Vector{Tuple{BigInt, BigInt}}:
+ (1, 0)
  (3, 2)
  (17, 12)
  (99, 70)
  (577, 408)
- (3363, 2378)
 
 julia> collect(take(pellseqn(5, -1), 5))
 5-element Vector{Tuple{BigInt, BigInt}}:
