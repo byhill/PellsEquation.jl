@@ -122,7 +122,7 @@ function pellseqn1(D::T) where {T<:Integer}
         (x₀, y₀) = (x₀ * x₀ + D * y₀ * y₀, 2x₀ * y₀)
     end
 
-    queue = Tuple{T,T}[(x₀, y₀)]
+    queue = Tuple{T,T}[(1, 0)]
     return PellsEqn{T}(D, x₀, y₀, queue)
 end
 
@@ -191,7 +191,10 @@ end
 
 
 function _pellseqn(D::T, N::T) where {T<:Integer}
-    (t, u) = first(pellseqn1(D))
+    i, t, u = fundamental_soln(D)
+    if isodd(i)  # Then the fundamental solution we found is for x^2 - Dy^2 = -1
+        t, u = t * t + D * u * u, 2t * u
+    end
 
     queue = Tuple{T,T}[]
     for (x, y) in fundamental_solns(D, N)
