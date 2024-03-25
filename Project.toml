@@ -1,7 +1,7 @@
 name = "PellsEquation"
 uuid = "b53f056f-43f6-4734-8d94-3aedffe6e4fb"
 authors = ["Bryan Hill <bf361640-7eb8-4e29-80f7-5250fa6b442b@aleeas.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ModularSquareRoots = "544cf62c-00ce-4949-a641-e1b79df66db1"
