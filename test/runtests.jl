@@ -143,4 +143,44 @@ using .Iterators
         @test isempty(it)
         @test res == [(25, 25), (175, 50), (305, 80), (935, 235), (1561, 391), (4687, 1172)]
     end
+
+    @testset "Continued fraction iterator" begin
+        @testset "Continued fraction of 0" begin
+            ans = Tuple{Int64,BigInt,BigInt}[(0, 0, 1)]
+            @test collect(continued_fraction(0)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0)) == ans
+            @test collect(continued_fraction(0, 0)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0, 0)) == ans
+            @test collect(continued_fraction(0, 0, 1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0, 0, 1)) == ans
+            @test_throws DomainError continued_fraction(0, 0, 0)
+        end
+
+        @testset "Continued fractions of integer" begin
+            ans = Tuple{Int64,BigInt,BigInt}[(1, 1, 1)]
+            @test collect(continued_fraction(1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(1)) == ans
+            @test collect(continued_fraction(0, 1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0, 1)) == ans
+            @test collect(continued_fraction(0, 1, 1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0, 1, 1)) == ans
+            @test collect(continued_fraction(1, 0, 1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(1, 0, 1)) == ans
+
+            ans = Tuple{Int64,BigInt,BigInt}[(16, 16, 1)]
+            @test collect(continued_fraction(16^2)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(16^2)) == ans
+            @test collect(continued_fraction(0, 16)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(0, 16)) == ans
+            @test collect(continued_fraction(9, 13)) == ans
+            @test collect(continued_fraction(36, 26, 2)) == ans
+
+            ans = Tuple{Int64,BigInt,BigInt}[(-16, -16, 1)]
+            @test collect(continued_fraction(16^2, 0, -1)) isa Vector{Tuple{Int64,BigInt,BigInt}}
+            @test collect(continued_fraction(16^2, 0, -1)) == ans
+            @test collect(continued_fraction(0, -16)) == ans
+            @test collect(continued_fraction(1, -17)) == ans
+            @test collect(continued_fraction(9, -51, 3)) == ans
+        end
+    end
 end

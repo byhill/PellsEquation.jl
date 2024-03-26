@@ -4,7 +4,7 @@ using ModularSquareRoots: sqrtmod
 using Primes: eachfactor, divisors
 using .Iterators
 
-export pellseqn
+export pellseqn, continued_fraction
 
 
 """
@@ -47,8 +47,7 @@ end
 PQa(D::T, P::Integer, Q::Integer) where {T<:Integer} = PQa(D, convert(T, P), convert(T, Q))
 function PQa(D::T, P::T, Q::T) where {T<:Integer}
     iszero(Q) && throw(DomainError(Q, "Q must be nonzero in the PQa algorithm"))
-    isless(0, D) || throw(DomainError(D, "D must be postive in the PQa algorithm"))
-    issquare(D) && throw(DomainError(D, "D must not be square in the PQa algorithm"))
+    isless(D, 0) && throw(DomainError(D, "D must be nonnegative in the PQa algorithm"))
     mod(powermod(P, 2, Q) - D, Q) == 0 || throw(DomainError(P, "Require P² ≡ D (mod Q) in the PQa algorithm"))
 
     return PQA{T}(D, P, Q)
@@ -78,6 +77,7 @@ function Base.iterate(it::PQA{T}, state) where {T<:Integer}
     i += 1
     Pᵢ = aᵢ₋₁ * Qᵢ₋₁ - Pᵢ₋₁
     Qᵢ = (D - Pᵢ^2) ÷ Qᵢ₋₁
+    iszero(Qᵢ) && return nothing
     aᵢ = (Pᵢ + isqrt(D)) ÷ Qᵢ
     Aᵢ = aᵢ * Aᵢ₋₁ + Aᵢ₋₂
     Bᵢ = aᵢ * Bᵢ₋₁ + Bᵢ₋₂
@@ -88,9 +88,70 @@ function Base.iterate(it::PQA{T}, state) where {T<:Integer}
     return (ret, state)
 end
 
-Base.IteratorSize(::Type{PQA{T}}) where {T} = Base.IsInfinite()
-eltype(::Type{PQA{T}}) where {T} = NamedTuple{(:i, :P, :Q, :a, :A, :B, :G),Tuple{Int64,Vararg{T,6}}}
+Base.IteratorSize(::Type{PQA{T}}) where {T} = Base.SizeUnknown()
+Base.eltype(::Type{PQA{T}}) where {T} = NamedTuple{(:i, :P, :Q, :a, :A, :B, :G),Tuple{Int64,Vararg{T,6}}}
 
+
+struct ContinuedFraction
+    PQa::PQA{BigInt}
+end
+
+
+"""
+    continued_fraction(D::Integer, P::Integer=0, Q::Integer=1)
+
+Returns and iterator that gives a continued fraction to the degree-two algebraic number
+
+    x = (P + sqrt(D)) / Q.
+
+More specifically, `continued_fraction(D, P, Q)` iterates over (ai::Int, Pi::BigInt, Qi::BigInt),
+where ai is the i'th coefficent of the continued fraction,
+and Pi / Qi is the i'th convergent.
+
+```julia
+julia> using PellsEquation, .Iterators
+
+julia> collect(take(continued_fraction(14, -9, -13), 12))
+12-element Vector{Tuple{Int64, BigInt, BigInt}}:
+ (0, 0, 1)
+ (2, 1, 2)
+ (2, 2, 5)
+ (8, 17, 42)
+ (1, 19, 47)
+ (1, 36, 89)
+ (18, 667, 1649)
+ (1, 703, 1738)
+ (12, 9103, 22505)
+ (1, 9806, 24243)
+ (18, 185611, 458879)
+ (1, 195417, 483122)
+"""
+continued_fraction(D::Integer, P::Integer=0, Q::Integer=1) = continued_fraction(big(D), big(P), big(Q))
+function continued_fraction(D::BigInt, P::BigInt, Q::BigInt)
+    D *= Q^2
+    P *= abs(Q)
+    Q *= abs(Q)
+    pqa = PQa(D, P, Q)
+    return ContinuedFraction(pqa)
+end
+
+
+function Base.iterate(itr::ContinuedFraction)
+    pqa = itr.PQa
+    ret, state = iterate(pqa)
+    return ((ret.a, ret.A, ret.B), state)
+end
+
+function Base.iterate(itr::ContinuedFraction, state)
+    pqa = itr.PQa
+    x = iterate(pqa, state)
+    isnothing(x) && return nothing
+    ret, state = x
+    return ((ret.a, ret.A, ret.B), state)
+end
+
+Base.IteratorSize(::Type{ContinuedFraction}) = Base.SizeUnknown()
+Base.eltype(::Type{ContinuedFraction}) = Tuple{Int,BigInt,BigInt}
 
 # --------------------------------------------------------------------
 # Pell's Equation:  x^2 - Dy^2 = 1
