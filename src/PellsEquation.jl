@@ -220,7 +220,7 @@ function fundamental_soln(D::T, P::T, Q::T) where {T<:Integer}
         if (P_reduced, Q_reduced) == (0, 0)
             ξ = (pqa.P + isqrt(D)) ÷ pqa.Q
             ξ̄ = (pqa.P - isqrt(D)) ÷ pqa.Q
-            if ξ ≥ 1 && ξ̄ == 0
+            if ξ ≥ 1 && pqa.P < isqrt(D - 1) && ξ̄ == 0
                 (P_reduced, Q_reduced) = (pqa.P, pqa.Q)
             end
         end

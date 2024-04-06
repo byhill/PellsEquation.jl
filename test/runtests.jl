@@ -102,6 +102,42 @@ using .Iterators
             @test all(xy isa Tuple{BigInt,BigInt} for xy in res)
             @test res == ans
         end
+
+        @testset "x^2 - 20y^2 = ±80" begin
+            ans = [
+                (10, 1)
+                (20, 4)
+                (50, 11)
+                (130, 29)
+                (340, 76)
+                (890, 199)
+                (2330, 521)
+                (6100, 1364)
+                (15970, 3571)
+                (41810, 9349)
+                (109460, 24476)
+                (286570, 64079)
+            ]
+            res = collect(take(pellseqn(20, 80), 12))
+            @test res == ans
+
+            ans = [
+                (0, 2)
+                (10, 3)
+                (30, 7)
+                (80, 18)
+                (210, 47)
+                (550, 123)
+                (1440, 322)
+                (3770, 843)
+                (9870, 2207)
+                (25840, 5778)
+                (67650, 15127)
+                (177110, 39603)
+            ]
+            res = collect(take(pellseqn(20, -80), 12))
+            @test res == ans
+        end
     end
 
     @testset "x^2 + 0 * y^2 = N^2" begin
