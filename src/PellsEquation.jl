@@ -59,7 +59,7 @@ function Base.iterate(it::PQA{T}) where {T<:Integer}
     (B₋₂, B₋₁) = (one(T), zero(T))
     (G₋₂, G₋₁) = (-it.P, it.Q)
 
-    a₀ = (it.P + isqrt(it.D)) ÷ it.Q
+    a₀ = it.Q < 0 ? fld(it.P + isqrt(it.D + 1) + 1, it.Q) : fld(it.P + isqrt(it.D), it.Q)
     A₀ = a₀ * A₋₁ + A₋₂
     B₀ = a₀ * B₋₁ + B₋₂
     G₀ = a₀ * G₋₁ + G₋₂
@@ -78,7 +78,7 @@ function Base.iterate(it::PQA{T}, state) where {T<:Integer}
     Pᵢ = aᵢ₋₁ * Qᵢ₋₁ - Pᵢ₋₁
     Qᵢ = (D - Pᵢ^2) ÷ Qᵢ₋₁
     iszero(Qᵢ) && return nothing
-    aᵢ = (Pᵢ + isqrt(D)) ÷ Qᵢ
+    aᵢ = Qᵢ < 0 ? fld(Pᵢ + isqrt(D + 1) + 1, Qᵢ) : fld(Pᵢ + isqrt(D), Qᵢ)
     Aᵢ = aᵢ * Aᵢ₋₁ + Aᵢ₋₂
     Bᵢ = aᵢ * Bᵢ₋₁ + Bᵢ₋₂
     Gᵢ = aᵢ * Gᵢ₋₁ + Gᵢ₋₂
@@ -220,7 +220,7 @@ function fundamental_soln(D::T, P::T, Q::T) where {T<:Integer}
         if (P_reduced, Q_reduced) == (0, 0)
             ξ = (pqa.P + isqrt(D)) ÷ pqa.Q
             ξ̄ = (pqa.P - isqrt(D)) ÷ pqa.Q
-            if ξ ≥ 1 && pqa.P < isqrt(D - 1) && ξ̄ == 0
+            if ξ ≥ 1 && pqa.P ≤ isqrt(D - 1) && ξ̄ == 0
                 (P_reduced, Q_reduced) = (pqa.P, pqa.Q)
             end
         end
