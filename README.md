@@ -7,7 +7,7 @@
 This package gives provides support for finding solutions to the [generalized](https://en.wikipedia.org/wiki/Pell's_equation#Generalized_Pell's_equation) [Pell's equation](https://en.wikipedia.org/wiki/Pell's_equation).
 More specifically, give an integer $N$ and an integer $D \geq 0$,
 this package will find all nonnegative integer solutions $(x, y)$ to the diophantine equation
-$$ x^2 - Dy^2 = N.$$
+$x^2 - Dy^2 = N$.
 
 To do this, you can call `pellseqn(D, N=1)`.
 This will return a (possibly infinite) iterator whose eltype is `Tuple{BigInt,BigInt}`.
