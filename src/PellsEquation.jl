@@ -59,7 +59,7 @@ function Base.iterate(it::PQA{T}) where {T<:Integer}
     (B₋₂, B₋₁) = (one(T), zero(T))
     (G₋₂, G₋₁) = (-it.P, it.Q)
 
-    a₀ = it.Q < 0 ? fld(it.P + isqrt(it.D + 1) + 1, it.Q) : fld(it.P + isqrt(it.D), it.Q)
+    a₀ = it.Q < 0 ? fld(it.P + isqrt(it.D - 1) + 1, it.Q) : fld(it.P + isqrt(it.D), it.Q)
     A₀ = a₀ * A₋₁ + A₋₂
     B₀ = a₀ * B₋₁ + B₋₂
     G₀ = a₀ * G₋₁ + G₋₂
