@@ -100,11 +100,15 @@ end
 """
     continued_fraction(D::Integer, P::Integer=0, Q::Integer=1)
 
-Returns and iterator that gives a continued fraction to the degree-two algebraic number
+Returns an iterator that gives a continued fraction to the degree-two algebraic number
 
     x = (P + sqrt(D)) / Q.
 
-More specifically, `continued_fraction(D, P, Q)` iterates over (ai::Int, Pi::BigInt, Qi::BigInt),
+More specifically,
+the iterator `continued_fraction(D, P, Q)` returns
+
+    (ai::BigInt, Pi::BigInt, Qi::BigInt),
+
 where ai is the i'th coefficent of the continued fraction,
 and Pi / Qi is the i'th convergent.
 
@@ -151,7 +155,7 @@ function Base.iterate(itr::ContinuedFraction, state)
 end
 
 Base.IteratorSize(::Type{ContinuedFraction}) = Base.SizeUnknown()
-Base.eltype(::Type{ContinuedFraction}) = Tuple{Int,BigInt,BigInt}
+Base.eltype(::Type{ContinuedFraction}) = Tuple{BigInt,BigInt,BigInt}
 
 # --------------------------------------------------------------------
 # Pell's Equation:  x^2 - Dy^2 = 1
@@ -448,4 +452,4 @@ function pellseqn(D::BigInt, N::BigInt=big(1))
 end
 
 
-end
+end  # module PellsEquation
