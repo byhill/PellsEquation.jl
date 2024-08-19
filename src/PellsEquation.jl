@@ -59,7 +59,7 @@ function Base.iterate(it::PQA{T}) where {T<:Integer}
     (B₋₂, B₋₁) = (one(T), zero(T))
     (G₋₂, G₋₁) = (-it.P, it.Q)
 
-    a₀ = it.Q < 0 ? fld(it.P + isqrt(it.D - 1) + 1, it.Q) : fld(it.P + isqrt(it.D), it.Q)
+    a₀ = it.Q < 0 && it.D > 0 ? fld(it.P + isqrt(it.D - 1) + 1, it.Q) : fld(it.P + isqrt(it.D), it.Q)
     A₀ = a₀ * A₋₁ + A₋₂
     B₀ = a₀ * B₋₁ + B₋₂
     G₀ = a₀ * G₋₁ + G₋₂
@@ -78,7 +78,7 @@ function Base.iterate(it::PQA{T}, state) where {T<:Integer}
     Pᵢ = aᵢ₋₁ * Qᵢ₋₁ - Pᵢ₋₁
     Qᵢ = (D - Pᵢ^2) ÷ Qᵢ₋₁
     iszero(Qᵢ) && return nothing
-    aᵢ = Qᵢ < 0 ? fld(Pᵢ + isqrt(D + 1) + 1, Qᵢ) : fld(Pᵢ + isqrt(D), Qᵢ)
+    aᵢ = fld(Pᵢ + isqrt(D), Qᵢ)
     Aᵢ = aᵢ * Aᵢ₋₁ + Aᵢ₋₂
     Bᵢ = aᵢ * Bᵢ₋₁ + Bᵢ₋₂
     Gᵢ = aᵢ * Gᵢ₋₁ + Gᵢ₋₂
@@ -102,7 +102,7 @@ end
 
 Returns an iterator that gives a continued fraction to the degree-two algebraic number
 
-    x = (P + sqrt(D)) / Q.
+    x = (sqrt(D) + P) / Q.
 
 More specifically,
 the iterator `continued_fraction(D, P, Q)` returns
@@ -112,7 +112,7 @@ the iterator `continued_fraction(D, P, Q)` returns
 where ai is the i'th coefficent of the continued fraction,
 and Pi / Qi is the i'th convergent.
 
-```julia
+```julia-repl
 julia> using PellsEquation, .Iterators
 
 julia> collect(take(continued_fraction(14, -9, -13), 12))
@@ -129,6 +129,13 @@ julia> collect(take(continued_fraction(14, -9, -13), 12))
  (1, 9806, 24243)
  (18, 185611, 458879)
  (1, 195417, 483122)
+
+julia> 667//1649 == 0 + (1//(2 + 1//(2 + 1//(8 + 1//(1 + 1//(1 + 1//18))))))
+true
+
+julia> (sqrt(14) - 9) / -13 ≈ 195417 / 483122
+true
+```
 """
 continued_fraction(D::Integer, P::Integer=0, Q::Integer=1) = continued_fraction(big(D), big(P), big(Q))
 function continued_fraction(D::BigInt, P::BigInt, Q::BigInt)
