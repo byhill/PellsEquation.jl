@@ -85,13 +85,12 @@ where $D, P, Q$ are integers.
 
 You can do this by calling
 `continued_fraction(D, P=0, Q=1)`.
-This returns an iterator whose eltypeds are 3-Tuples of the form
-
-    (ai::BigInt, Pi::BigInt, Qi::BigInt),
-
+This returns an iterator whose eltypes are 3-Tuples of the form `(ai::BigInt, Pi::BigInt, Qi::BigInt)`,
 where `ai` is the `i`'th coefficent of the continued fraction of $(\sqrt{D} + P) / Q$,
 and `Pi / Qi` is its `i`'th convergent.
 
+This can be useful if you want to approximate a floating point quadratic number
+with a rational number so you can avoid floating-point arithmetic.
 
 ### Examples
 
